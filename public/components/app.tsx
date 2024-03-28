@@ -17,6 +17,7 @@ export const MapsDashboardsApp = () => {
     services: { appBasePath },
   } = useOpenSearchDashboards<MapServices>();
   // Render the application DOM.
+  console.log("should be here once?")
   return (
     <Router history={appBasePath}>
       <I18nProvider>

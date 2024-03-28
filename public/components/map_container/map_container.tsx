@@ -46,7 +46,7 @@ interface MapContainerProps {
   isUpdatingLayerRender: boolean;
   setIsUpdatingLayerRender: (isUpdatingLayerRender: boolean) => void;
   addSpatialFilter: (shape: ShapeFilter, label: string | null, relation: GeoShapeRelation) => void;
-  dataSourceRefIds: string[];
+  dataSourceRefIds: string[]|undefined;
   setDataSourceRefIds: (refIds: string[]) => void;
 }
 
@@ -242,6 +242,7 @@ export const MapContainer = ({
       (indexPattern) => indexPattern.id === selectedLayerConfig.source.indexPatternId
     );
     if (!findIndexPattern) {
+      console.log("should not be here?")
       const newIndexPattern = await services.data.indexPatterns.get(
         // @ts-ignore
         selectedLayerConfig.source.indexPatternId

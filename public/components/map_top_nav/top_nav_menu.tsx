@@ -26,7 +26,7 @@ interface MapTopNavMenuProps {
   setMapState: (mapState: MapState) => void;
   originatingApp?: string;
   setIsUpdatingLayerRender: (isUpdatingLayerRender: boolean) => void;
-  dataSourceRefIds: string[];
+  dataSourceRefIds: string[] | undefined;
 }
 
 export const MapTopNavMenu = ({
@@ -71,23 +71,31 @@ export const MapTopNavMenu = ({
     [chrome, navigateToApp]
   );
 
+  const [isLoading1, setIsLoading1] = useState<boolean>(true);
+  const [isLoading2, setIsLoading2] = useState<boolean>(true);
+  const [isLoading3, setIsLoading3] = useState<boolean>(true);
+  const [isLoading4, setIsLoading4] = useState<boolean>(true);
+
   useEffect(() => {
     const { originatingApp: value } =
       embeddable
         .getStateTransfer(scopedHistory)
         .getIncomingEditorState({ keysToRemoveAfterFetch: ['id', 'input'] }) || {};
     setOriginatingApp(value);
+    setIsLoading1(false);
   }, [embeddable, scopedHistory]);
 
   useEffect(() => {
     if (savedMapObject) {
       setTitle(savedMapObject.attributes.title);
       setDescription(savedMapObject.attributes.description!);
+      setIsLoading2(false);
     }
   }, [savedMapObject, mapIdFromUrl]);
 
   useEffect(() => {
     changeTitle(title || 'Create');
+    setIsLoading3(false);
   }, [title, changeTitle]);
 
   const refreshDataLayerRender = () => {
@@ -114,6 +122,7 @@ export const MapTopNavMenu = ({
     setQueryConfig(mapState.query);
     setIsRefreshPaused(mapState.refreshInterval.pause);
     setRefreshIntervalValue(mapState.refreshInterval.value);
+    setIsLoading4(false);
   }, [mapState.timeRange, mapState.query, mapState.refreshInterval]);
 
   const onRefreshChange = useCallback(
@@ -138,47 +147,16 @@ export const MapTopNavMenu = ({
   }, [services, mapIdFromUrl, layers, title, description, mapState, originatingApp]);
 
   const dataSourceManagementEnabled: boolean = !!dataSourceManagement;
-  // const remoteDataSourceIds: (string | undefined)[] = Array.from(
-  //   new Set(layersIndexPatterns.map((indexPattern) => indexPattern.dataSourceRef?.id))
-  // );
-
-  // useEffect(() => {
-  //   console.log(layersIndexPatterns, 'Print-----layersIndexPatterns-----');
-  //   console.log(layersIndexPatterns.length, 'Print-----layersIndexPatterns.length-----');
-  //   const remoteDataSourceIds: string[] = layersIndexPatterns
-  //     .filter((indexPattern) => indexPattern.dataSourceRef !== undefined)
-  //     .map((indexPattern) => indexPattern.dataSourceRef!.id);
-  //   console.log(remoteDataSourceIds, 'Print-----remoteDataSourceIds-----');
-  //   setDataSourceRefIds(remoteDataSourceIds);
-  // }, [layersIndexPatterns]);
-  //
-  // const dataSourceRefIds1: string[] = layersIndexPatterns
-  //   .filter((indexPattern) => indexPattern.dataSourceRef !== undefined)
-  //   .map((indexPattern) => indexPattern.dataSourceRef!.id);
-  //
-  // console.log(
-  //   layersIndexPatterns.length,
-  //   'Print-----layersIndexPatterns.length-out-of-effect-----MapTopNavMenu'
-  // );
-  // console.log(layersIndexPatterns, 'Print-----layersIndexPatterns--out-of-effect---MapTopNavMenu');
-  // console.log(dataSourceRefIds1, 'Print-----dataSourceRefIds1--out-of-effect---MapTopNavMenu');
-
-  // const remoteDataSourceIds: string[] = layersIndexPatterns.map(
-  //   (indexPattern) => indexPattern.dataSourceRef!.id
-  // );
-  // console.log(remoteDataSourceIds, 'remoteDataSourceIds');
-
-  // for (const indexPattern of layersIndexPatterns) {
-  //   console.log(indexPattern, 'indexPattern');
-  //   console.log(indexPattern.dataSourceRef, 'indexPattern.dataSourceRef');
-  //   console.log(indexPattern.dataSourceRef?.id, 'indexPattern.dataSourceRef?.id');
-  // }
-
+  
+  if (!isLoading1 && !isLoading2 && !isLoading3 && !isLoading4 && dataSourceRefIds) {
+    console.log("nothing should be loading", dataSourceRefIds)
+  }
   console.log(dataSourceRefIds, 'Print-----dataSourceRefIds-----MapTopNavMenu');
 
   return (
     // @ts-ignore
     <>
+    {!isLoading1 && !isLoading2 && !isLoading3 && !isLoading4 && dataSourceRefIds &&
       <TopNavMenu
         appName={MAPS_APP_ID}
         config={config}
@@ -198,23 +176,18 @@ export const MapTopNavMenu = ({
         refreshInterval={refreshIntervalValue}
         onRefresh={refreshDataLayerRender}
         onRefreshChange={onRefreshChange}
-      />
-      {dataSourceManagementEnabled && (
-        // @ts-ignore
-        <dataSourceManagement.ui.DataSourceMenu
-          setMenuMountPoint={setHeaderActionMenu}
-          showDataSourceAggregatedView={true}
-          activeDatasourceIds={dataSourceRefIds}
-          savedObjects={savedObjectsClient}
-          notifications={notifications}
-          appName={'mapsPageDataSourceMenu'}
-          hideLocalCluster={false}
-          fullWidth={true}
-          displayAllCompatibleDataSources={false}
-          showTopNavMenuItems={true}
-          config={config}
-        />
-      )}
+        showDataSourceMenu={true}
+        dataSourceMenuConfig={{
+          componentType: 'DataSourceAggregatedView',
+          componentConfig: {
+            fullWidth: true,
+            activeDataSourceIds: dataSourceRefIds || undefined,
+            savedObjects: savedObjectsClient,
+            notifications: notifications,
+            displayAllCompatibleDataSources: false,
+          }
+        }}
+      />}
     </>
   );
 };
